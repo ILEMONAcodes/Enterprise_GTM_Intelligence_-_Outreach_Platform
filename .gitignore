@@ -1,0 +1,17 @@
+# Python / Virtual Environments
+venv/
+venv-1/
+.venv/
+.venv-1/
+__pycache__/
+*.pyc
+.env
+
+# Node / Frontend
+node_modules/
+.next/
+dist/
+build/
+
+# OS Files
+.DS_Store
