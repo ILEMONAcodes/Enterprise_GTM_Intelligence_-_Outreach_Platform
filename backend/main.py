@@ -1,29 +1,42 @@
-from __future__ import annotations
-
-from fastapi import FastAPI
+# backend/main.py
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
-from backend.models import CampaignRequest, CampaignResult
 from backend.workflow import OutreachWorkflow
+from backend.models import OutreachConfig, PipelineResult
 
-app = FastAPI(title="GTM Agent API", version="0.1.0")
+load_dotenv()
 
+app = FastAPI(
+    title="GTM Agent API",
+    description="Multi-agent GTM outreach and research pipeline backend",
+    version="1.0.0"
+)
+
+# Enable CORS so your frontend application can talk to this server smoothly
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Update this with your frontend URL in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Initialize the workflow engine globally
 workflow = OutreachWorkflow()
 
+@app.get("/")
+def health_check():
+    return {"status": "healthy", "service": "GTM Agent Pipeline API"}
 
-@app.get("/health")
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.post("/generate-campaign", response_model=CampaignResult)
-async def generate_campaign(request: CampaignRequest) -> CampaignResult:
-    return await workflow.run(request)
+@app.post("/api/run-pipeline", response_model=PipelineResult)
+def run_outreach_pipeline(config: OutreachConfig):
+    """
+    Triggers the 4-agent GTM pipeline using strict Pydantic validation.
+    """
+    try:
+        result = workflow.run(config)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
